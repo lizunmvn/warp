@@ -419,8 +419,18 @@ impl Configured {
     }
 
     fn is_origin_allowed(&self, origin: &HeaderValue) -> bool {
+        let origin_str = origin.to_str();
+        if !origin_str.is_ok() {
+            return false;
+        }
         if let Some(ref allowed) = self.cors.origins {
-            allowed.contains(origin)
+            let mut flag = false;
+            for entry in allowed {
+                if origin_str.as_ref().unwrap().contains(entry.to_str().unwrap()) {
+                    flag = true;
+                }
+            }
+            flag
         } else {
             true
         }
@@ -481,7 +491,7 @@ mod internal {
         F::Error: CombineRejection<Rejection>,
     {
         type Extract =
-            One<Either<One<Preflight>, One<Either<One<Wrapped<F::Extract>>, F::Extract>>>>;
+        One<Either<One<Preflight>, One<Either<One<Wrapped<F::Extract>>, F::Extract>>>>;
         type Error = <F::Error as CombineRejection<Rejection>>::One;
         type Future = future::Either<
             future::Ready<Result<Self::Extract, Self::Error>>,
