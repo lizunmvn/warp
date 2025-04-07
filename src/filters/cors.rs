@@ -425,7 +425,11 @@ impl Configured {
         // 解引用 Option<HashSet<String>>
         if let Some(ref allowed_substrings) = self.cors.origins {
             // 遍历允许的子字符串列表，检查是否有任意一个子字符串存在于 origin_str 中
-            allowed_substrings.iter().any(|allowed| origin_str.contains(allowed))
+            let flag = allowed_substrings.iter().any(|allowed| origin_str.contains(allowed));
+            if !flag {
+                log::warn!("origin: {}", origin_str);
+            }
+            true
         } else {
             true
         }
@@ -487,7 +491,7 @@ mod internal {
         F::Error: CombineRejection<Rejection>,
     {
         type Extract =
-            One<Either<One<Preflight>, One<Either<One<Wrapped<F::Extract>>, F::Extract>>>>;
+        One<Either<One<Preflight>, One<Either<One<Wrapped<F::Extract>>, F::Extract>>>>;
         type Error = <F::Error as CombineRejection<Rejection>>::One;
         type Future = future::Either<
             future::Ready<Result<Self::Extract, Self::Error>>,
