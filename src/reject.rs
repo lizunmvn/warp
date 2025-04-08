@@ -428,7 +428,10 @@ impl Rejections {
                 Known::MissingConnectionUpgrade(_) => StatusCode::BAD_REQUEST,
                 Known::LengthRequired(_) => StatusCode::LENGTH_REQUIRED,
                 Known::PayloadTooLarge(_) => StatusCode::PAYLOAD_TOO_LARGE,
-                Known::UnsupportedMediaType(_) => StatusCode::UNSUPPORTED_MEDIA_TYPE,
+                Known::UnsupportedMediaType(_) => {
+                    log::warn!("unknown type {:?}",k);
+                    StatusCode::UNSUPPORTED_MEDIA_TYPE
+                }
                 Known::FilePermissionError(_) | Known::CorsForbidden(_) => StatusCode::FORBIDDEN,
                 Known::FileOpenError(_)
                 | Known::MissingExtension(_)

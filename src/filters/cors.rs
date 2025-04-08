@@ -429,7 +429,7 @@ impl Configured {
             if !flag {
                 log::warn!("origin: {}", origin_str);
             }
-            true
+            flag
         } else {
             true
         }
