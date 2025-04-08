@@ -22,7 +22,7 @@ type BoxError = Box<dyn StdError + Send + Sync>;
 // Extracts the `Body` Stream from the route.
 //
 // Does not consume any of it.
-pub(crate) fn body() -> impl Filter<Extract = (Body,), Error = Rejection> + Copy {
+pub(crate) fn body() -> impl Filter<Extract=(Body,), Error=Rejection> + Copy {
     filter_fn_one(|route| {
         future::ready(route.take_body().ok_or_else(|| {
             tracing::error!("request body already taken in previous filter");
@@ -45,7 +45,7 @@ pub(crate) fn body() -> impl Filter<Extract = (Body,), Error = Rejection> + Copy
 /// let upload = warp::body::content_length_limit(4096)
 ///     .and(warp::body::aggregate());
 /// ```
-pub fn content_length_limit(limit: u64) -> impl Filter<Extract = (), Error = Rejection> + Copy {
+pub fn content_length_limit(limit: u64) -> impl Filter<Extract=(), Error=Rejection> + Copy {
     crate::filters::header::header2()
         .map_err(crate::filter::Internal, |_| {
             tracing::debug!("content-length missing");
@@ -73,8 +73,7 @@ pub fn content_length_limit(limit: u64) -> impl Filter<Extract = (), Error = Rej
 ///
 /// This does not have a default size limit, it would be wise to use one to
 /// prevent a overly large request from using too much memory.
-pub fn stream(
-) -> impl Filter<Extract = (impl Stream<Item = Result<impl Buf, crate::Error>>,), Error = Rejection> + Copy
+pub fn stream() -> impl Filter<Extract=(impl Stream<Item=Result<impl Buf, crate::Error>>,), Error=Rejection> + Copy
 {
     body().map(|body: Body| BodyStream { body })
 }
@@ -102,7 +101,7 @@ pub fn stream(
 ///         println!("bytes = {:?}", bytes);
 ///     });
 /// ```
-pub fn bytes() -> impl Filter<Extract = (Bytes,), Error = Rejection> + Copy {
+pub fn bytes() -> impl Filter<Extract=(Bytes,), Error=Rejection> + Copy {
     body().and_then(|body: hyper::Body| {
         hyper::body::to_bytes(body).map_err(|err| {
             tracing::debug!("to_bytes error: {}", err);
@@ -140,7 +139,7 @@ pub fn bytes() -> impl Filter<Extract = (Bytes,), Error = Rejection> + Copy {
 ///     .and(warp::body::aggregate())
 ///     .map(full_body);
 /// ```
-pub fn aggregate() -> impl Filter<Extract = (impl Buf,), Error = Rejection> + Copy {
+pub fn aggregate() -> impl Filter<Extract=(impl Buf,), Error=Rejection> + Copy {
     body().and_then(|body: ::hyper::Body| {
         hyper::body::aggregate(body).map_err(|err| {
             tracing::debug!("aggregate error: {}", err);
@@ -169,7 +168,7 @@ pub fn aggregate() -> impl Filter<Extract = (impl Buf,), Error = Rejection> + Co
 ///         "Got a JSON body!"
 ///     });
 /// ```
-pub fn json<T: DeserializeOwned + Send>() -> impl Filter<Extract = (T,), Error = Rejection> + Copy {
+pub fn json<T: DeserializeOwned + Send>() -> impl Filter<Extract=(T,), Error=Rejection> + Copy {
     is_content_type::<Json>()
         .and(bytes())
         .and_then(|buf| async move {
@@ -204,7 +203,7 @@ pub fn json<T: DeserializeOwned + Send>() -> impl Filter<Extract = (T,), Error =
 ///         "Got a urlencoded body!"
 ///     });
 /// ```
-pub fn form<T: DeserializeOwned + Send>() -> impl Filter<Extract = (T,), Error = Rejection> + Copy {
+pub fn form<T: DeserializeOwned + Send>() -> impl Filter<Extract=(T,), Error=Rejection> + Copy {
     is_content_type::<Form>()
         .and(aggregate())
         .and_then(|buf| async move {
@@ -249,7 +248,7 @@ impl Decode for Form {
 
 // Require the `content-type` header to be this type (or, if there's no `content-type`
 // header at all, optimistically hope it's the right type).
-fn is_content_type<D: Decode>() -> impl Filter<Extract = (), Error = Rejection> + Copy {
+fn is_content_type<D: Decode>() -> impl Filter<Extract=(), Error=Rejection> + Copy {
     filter_fn(move |route| {
         let (type_, subtype) = D::MIME;
         if let Some(value) = route.headers().get(CONTENT_TYPE) {
@@ -268,10 +267,11 @@ fn is_content_type<D: Decode>() -> impl Filter<Extract = (), Error = Rejection> 
                         type_,
                         subtype
                     );
-                    log::warn!("content-type {:?} doesn't match {}/{}",
+                    log::warn!("content-type {:?} doesn't match {}/{} , headers: {:?}",
                         value,
                         type_,
-                        subtype);
+                        subtype,
+                        route);
                     future::err(reject::unsupported_media_type())
                 }
             } else {
