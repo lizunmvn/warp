@@ -268,10 +268,15 @@ fn is_content_type<D: Decode>() -> impl Filter<Extract = (), Error = Rejection> 
                         type_,
                         subtype
                     );
+                    log::warn!("content-type {:?} doesn't match {}/{}",
+                        value,
+                        type_,
+                        subtype);
                     future::err(reject::unsupported_media_type())
                 }
             } else {
                 tracing::debug!("content-type {:?} couldn't be parsed", value);
+                log::warn!("content-type {:?} couldn't be parsed", value);
                 future::err(reject::unsupported_media_type())
             }
         } else if D::WITH_NO_CONTENT_TYPE {
