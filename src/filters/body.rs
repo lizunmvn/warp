@@ -106,7 +106,6 @@ pub fn bytes() -> impl Filter<Extract=(Bytes,), Error=Rejection> + Copy {
     body().and_then(|body: hyper::Body| {
         hyper::body::to_bytes(body).map_err(|err| {
             tracing::debug!("to_bytes error: {}", err);
-            log::warn!("byte length : {:?}",body.size_hint());
             reject::known(BodyReadError(err))
         })
     })
